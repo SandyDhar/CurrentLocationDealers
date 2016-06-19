@@ -15,6 +15,7 @@
 @property (nonatomic,weak)NSArray *dealerName;
 @property (nonatomic,weak)NSArray *dealerAddress;
 @property (nonatomic,weak)NSOperationQueue* queue;
+@property (nonatomic,weak)NSURLSessionDataTask *task;
 @end
 
 
@@ -103,63 +104,112 @@ CLPlacemark *placemark;
 }
 
 -(void)getAPIData{
+    
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"https://api.edmunds.com/api/dealer/v2/dealers?zipcode=%@&radius=%@&fmt=json&api_key=ycwedw68qast829zx7sn9jnq",@"01609",@"10"]];
+    
+    // attempt the request
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+                                                       timeoutInterval:10];
+    [request setHTTPMethod: @"GET"];
+    
+    NSError *reqError;
+    NSURLResponse *urlResponse;
+    NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&urlResponse error:&reqError];
+    
+    // parse `returnedData` here
+    if (data.length > 0 && reqError == nil)
+    {
+        
+        NSDictionary *jsonData = [NSJSONSerialization JSONObjectWithData:data
+                                                                 options:kNilOptions
+                                                                   error:NULL];
+        
+        
+        
+        self.dealersDictionary = jsonData[@"dealers"];
+        
+        for (id item in self.dealersDictionary){
+            if (item[@"name"] != nil){
+                self.dealerName = item[@"name"];
+                NSLog(@"%@",self.dealerName);
+            }
+            else{
+                NSLog(@"could'nt find the names");
+            }
+            if (item[@"address"] != nil){
+                NSDictionary *address = item[@"address"];
+                self.dealerAddress = address[@"street"];
+                //NSLog(@"%@",self.dealerAddress);
+                // NSLog(@"%@",address[@"city"]);
+            }
+            else{
+                NSLog(@"could'nt find the address");
+            }
+            
+        }
+    
+    }
 
     
-    NSURLSession *session = [NSURLSession sharedSession];
-    [session dataTaskWithURL:[NSURL URLWithString:[NSString stringWithFormat:
-                                                    @"https://api.edmunds.com/api/dealer/v2/dealers?zipcode=%@&radius=%@&fmt=json&api_key=ycwedw68qast829zx7sn9jnq",
-                                                    @"01609",@"10"]]
-      completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-          
-        
-          
-          if (data.length > 0 && error == nil)
-          {
-              
-              NSDictionary *jsonData = [NSJSONSerialization JSONObjectWithData:data
-                                                                       options:kNilOptions
-                                                                         error:NULL];
-              
-              
-              
-              self.dealersDictionary = jsonData[@"dealers"];
-              
-              
-              
-              for (id item in self.dealersDictionary){
-                  if (item[@"name"] != nil){
-                      self.dealerName = item[@"name"];
-                      NSLog(@"%@",self.dealerName);
-                     }
-                  else{
-                      NSLog(@"could'nt find the names");
-                  }
-                  if (item[@"address"] != nil){
-                      NSDictionary *address = item[@"address"];
-                      self.dealerAddress = address[@"street"];
-                      //NSLog(@"%@",self.dealerAddress);
-                      // NSLog(@"%@",address[@"city"]);
-                  }
-                  else{
-                      NSLog(@"could'nt find the address");
-                  }
-                  
-              }
-              [self.tableView reloadData];
-              
-          }
-          
-      }
-     ];
-   
-    
+//    NSURLSession *session = [NSURLSession sharedSession];
+//    self.task = [session dataTaskWithURL:[NSURL URLWithString:[NSString stringWithFormat:
+//                                                    @"https://api.edmunds.com/api/dealer/v2/dealers?zipcode=%@&radius=%@&fmt=json&api_key=ycwedw68qast829zx7sn9jnq",
+//                                                    @"01609",@"10"]]
+//      completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+//          
+//        
+//          
+//          if (data.length > 0 && error == nil)
+//          {
+//              
+//              NSDictionary *jsonData = [NSJSONSerialization JSONObjectWithData:data
+//                                                                       options:kNilOptions
+//                                                                         error:NULL];
+//              
+//              
+//              
+//              self.dealersDictionary = jsonData[@"dealers"];
+//              
+//              
+//              
+//              for (id item in self.dealersDictionary){
+//                  if (item[@"name"] != nil){
+//                      self.dealerName = item[@"name"];
+//                      NSLog(@"%@",self.dealerName);
+//                     }
+//                  else{
+//                      NSLog(@"could'nt find the names");
+//                  }
+//                  if (item[@"address"] != nil){
+//                      NSDictionary *address = item[@"address"];
+//                      self.dealerAddress = address[@"street"];
+//                      //NSLog(@"%@",self.dealerAddress);
+//                      // NSLog(@"%@",address[@"city"]);
+//                  }
+//                  else{
+//                      NSLog(@"could'nt find the address");
+//                  }
+//                  
+//              }
+//             // [self.tableView reloadData];
+//              
+//          }
+//          
+//      }
+//     ];
+//   
+//   [self.task resume]; 
 }
 
 
 
 -(NSInteger)tableView:(UITableView *)tableview numberOfRowsInSection:(NSInteger)section
 {
+   // [self.task resume];
+ //   NSLog(@"%ld sudeewwww",(long)_dealerName.count);
     return self.dealerName.count;
+    //return 7;
 }
 
     
